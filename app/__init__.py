@@ -1,6 +1,10 @@
 from flask import Flask
 from .config import Config
+from flask_restful import Api
 from .extensions import db, migrate, bcrypt
+from .routes.auth_routes import RegisterResource, LoginResource
+from .routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource
+
 
 def create_app():
     # Initialize Flask app
@@ -14,10 +18,16 @@ def create_app():
     migrate.init_app(app, db)
     bcrypt.init_app(app)
     
+    api = Api(app)
 
-    # Register blueprints (if any)
-    from .routes.auth_routes import auth_bp
-    app.register_blueprint(auth_bp)
+
+    # Register routes
+    api.add_resource(RegisterResource, '/register')
+    api.add_resource(LoginResource, '/login')
+    api.add_resource(AddDriverResource, '/admin/add_driver')
+    api.add_resource(ViewAllUsersResource, '/admin/users')
+    api.add_resource(ViewAllBookingsResource, '/admin/bookings')
+    api.add_resource(ViewAllTransactionsResource, '/admin/transactions')
 
     # Create database tables (if they don't exist)
     with app.app_context():
