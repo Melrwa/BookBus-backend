@@ -16,13 +16,13 @@ marshmallow-sqlalchemy = "*"
 sqlalchemy-schemadisplay = "*"
 gunicorn = "*"
 flask = "*"
-flask-restful = "*"
 dotenv = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
 flask-bcrypt = "*"
 flask-cors = "*"
 psycopg2 = "*"
+flask-restful = "*"
 
 [dev-packages]
 
