@@ -1,0 +1,15 @@
+flask-serialize
+python-dotenv
+flask-migrate
+flask-cors
+flask-jwt-extended
+flask-bcrypt
+flasgger
+flask-restful
+psycopg2-binary
+sqlalchemy-serializer
+cloudinary
+marshmallow
+marshmallow-sqlalchemy
+sqlalchemy-schemadisplay
+gunicorn
