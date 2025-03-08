@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from .config import Config
 from flask_restful import Api
 from .extensions import db, migrate, bcrypt
@@ -19,6 +20,14 @@ def create_app():
     bcrypt.init_app(app)
     
     api = Api(app)
+
+    CORS(
+        app,
+        origins=app.config["CORS_ORIGINS"],
+        methods=app.config["CORS_METHODS"],
+        allow_headers=app.config["CORS_ALLOW_HEADERS"],
+        supports_credentials=True,  # Allow credentials (e.g., cookies, authorization headers)
+    )
 
 
     # Register routes
