@@ -3,6 +3,9 @@ from flask_restful import Resource
 from app.models.user import User
 from app.extensions import db, bcrypt
 from app.utils.jwt_utils import generate_token
+from app.schemas.user_schema import UserSchema
+
+user_schema = UserSchema()
 
 class RegisterResource(Resource):
     def post(self):
@@ -25,7 +28,7 @@ class RegisterResource(Resource):
         db.session.commit()
 
         token = generate_token(user.id, user.role)
-        return {'token': token, 'user_id': user.id, 'role': user.role}, 201
+        return {'token': token, 'user': user_schema.dump(user)}, 201
 
 class LoginResource(Resource):
     def post(self):
@@ -41,4 +44,4 @@ class LoginResource(Resource):
             return {'message': 'Invalid email or password'}, 401
 
         token = generate_token(user.id, user.role)
-        return {'token': token, 'user_id': user.id, 'role': user.role}, 200
+        return {'token': token, 'user': user_schema.dump(user)}, 200
