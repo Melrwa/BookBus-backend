@@ -50,11 +50,17 @@ class ViewAllUsersResource(Resource):
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
-        if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
+            if current_user.role != 'admin':
+                return {'message': 'Unauthorized'}, 403
 
-        bookings = Booking.query.all()
-        return booking_schema.dump(bookings, many=True), 200
+            # Fetch all bookings from the database
+            bookings = Booking.query.all()
+
+            # Serialize the bookings using the schema
+            serialized_bookings = booking_schema.dump(bookings, many=True)
+
+            # Return the serialized bookings as a JSON response
+            return serialized_bookings, 200
 
 class ViewAllTransactionsResource(Resource):
     @token_required
