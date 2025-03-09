@@ -1,4 +1,4 @@
-from flask import request, jsonify, request
+from flask import request, jsonify, request, make_response
 from flask_restful import Resource
 from app.models.user import User
 from app.models.bookings import Booking
@@ -50,6 +50,7 @@ class ViewAllUsersResource(Resource):
 
 
 
+
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
@@ -64,9 +65,10 @@ class ViewAllBookingsResource(Resource):
         # Fetch and serialize bookings using the service function
         result = get_all_bookings_service(page=page, per_page=per_page)
 
-        # Return the serialized bookings and pagination metadata
-        return result, 200
-    
+        # Use make_response to construct the response
+        response = make_response(result, 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 class ViewAllTransactionsResource(Resource):
     @token_required
