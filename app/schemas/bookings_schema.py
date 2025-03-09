@@ -10,3 +10,4 @@ class BookingSchema(Schema):
 
     class Meta:
         fields = ('id', 'customer_id', 'bus_id', 'seat_number', 'booking_date', 'status')
+        

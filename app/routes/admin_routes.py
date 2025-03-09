@@ -6,13 +6,15 @@ from app.models.transactions import Transaction
 from app.extensions import db
 from app.utils.jwt_utils import token_required
 from app.schemas.user_schema import UserSchema
-from app.schemas.bookings_schema import BookingSchema, get_all_bookings_service
+from app.schemas.bookings_schema import BookingSchema
 from app.schemas.transaction_schema import TransactionSchema
-
+import logging
 
 user_schema = UserSchema()
 booking_schema = BookingSchema()
+bookings_schema = BookingSchema(many=True)  # For serializing multiple bookings
 transaction_schema = TransactionSchema()
+
 
 class AddDriverResource(Resource):
     @token_required
@@ -62,11 +64,35 @@ class ViewAllBookingsResource(Resource):
         page = request.args.get('page', default=1, type=int)
         per_page = request.args.get('per_page', default=10, type=int)
 
-        # Fetch and serialize bookings using the service function
-        result = get_all_bookings_service(page=page, per_page=per_page)
+        # Fetch all bookings from the database with pagination
+        bookings = Booking.query.paginate(page=page, per_page=per_page, error_out=False)
+
+        # Serialize the bookings using the schema
+        try:
+            serialized_bookings = bookings_schema.dump(bookings.items)
+            logging.info("Serialized Bookings: %s", serialized_bookings)  # Log the serialized data
+        except Exception as e:
+            logging.error("Serialization error: %s", str(e))  # Log the error
+            return {'message': f'Serialization error: {str(e)}'}, 500
+
+        # Ensure the output is JSON-serializable
+        if not isinstance(serialized_bookings, (list, dict)):
+            logging.error("Serialization error: Invalid data format")  # Log the error
+            return {'message': 'Serialization error: Invalid data format'}, 500
+
+        # Prepare the response data
+        response_data = {
+            'bookings': serialized_bookings,
+            'pagination': {
+                'page': bookings.page,
+                'per_page': bookings.per_page,
+                'total_pages': bookings.pages,
+                'total_bookings': bookings.total
+            }
+        }
 
         # Use make_response to construct the response
-        response = make_response(result, 200)
+        response = make_response(response_data, 200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
