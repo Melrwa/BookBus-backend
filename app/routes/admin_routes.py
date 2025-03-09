@@ -6,9 +6,9 @@ from app.models.transactions import Transaction
 from app.extensions import db
 from app.utils.jwt_utils import token_required
 from app.schemas.user_schema import UserSchema
-from app.schemas.bookings_schema import BookingSchema
+from app.schemas.bookings_schema import BookingSchema, get_all_bookings_service
 from app.schemas.transaction_schema import TransactionSchema
-import logging
+
 
 user_schema = UserSchema()
 booking_schema = BookingSchema()
@@ -50,10 +50,10 @@ class ViewAllUsersResource(Resource):
 
 
 
-
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
+        """Get all bookings (admin only)."""
         if current_user.role != 'admin':
             return {'message': 'Unauthorized'}, 403
 
@@ -61,29 +61,11 @@ class ViewAllBookingsResource(Resource):
         page = request.args.get('page', default=1, type=int)
         per_page = request.args.get('per_page', default=10, type=int)
 
-        # Paginate the bookings query
-        bookings = Booking.query.paginate(page=page, per_page=per_page, error_out=False)
+        # Fetch and serialize bookings using the service function
+        result = get_all_bookings_service(page=page, per_page=per_page)
 
-        # Serialize the paginated bookings
-        try:
-            serialized_bookings = booking_schema.dump(bookings.items, many=True)
-        except Exception as e:
-            return {'message': f'Serialization error: {str(e)}'}, 500
-
-        # Ensure the output is JSON-serializable
-        if not isinstance(serialized_bookings, (list, dict)):
-            return {'message': 'Serialization error: Invalid data format'}, 500
-
-        # Return the serialized bookings along with pagination metadata
-        return {
-            'bookings': serialized_bookings,
-            'pagination': {
-                'page': bookings.page,
-                'per_page': bookings.per_page,
-                'total_pages': bookings.pages,
-                'total_items': bookings.total
-            }
-        }, 200
+        # Return the serialized bookings and pagination metadata
+        return result, 200
     
 
 class ViewAllTransactionsResource(Resource):
