@@ -57,21 +57,21 @@ class ViewAllBookingsResource(Resource):
         if current_user.role != 'admin':
             return {'message': 'Unauthorized'}, 403
 
-        # Fetch all bookings from the database
-        bookings = Booking.query.all()
-
-        # Serialize the bookings using the schema
         try:
-            serialized_bookings = bookings_schema.dump(bookings)
-            logging.info("Serialized Bookings: %s", serialized_bookings)  # Log the serialized data
+            # Fetch all bookings from the database
+            bookings = Booking.query.all()
+            logging.info(f"Fetched {len(bookings)} bookings from the database.")
         except Exception as e:
-            logging.error("Serialization error: %s", str(e))  # Log the error
-            return {'message': f'Serialization error: {str(e)}'}, 500
+            logging.error(f"Error fetching bookings: {str(e)}")
+            return {'message': 'Failed to fetch bookings'}, 500
 
-        # Ensure the output is JSON-serializable
-        if not isinstance(serialized_bookings, (list, dict)):
-            logging.error("Serialization error: Invalid data format")  # Log the error
-            return {'message': 'Serialization error: Invalid data format'}, 500
+        try:
+            # Serialize the bookings using the schema
+            serialized_bookings = bookings_schema.dump(bookings)
+            logging.info("Bookings serialized successfully.")
+        except Exception as e:
+            logging.error(f"Error serializing bookings: {str(e)}")
+            return {'message': 'Failed to serialize bookings'}, 500
 
         # Return the serialized bookings
         return {'bookings': serialized_bookings}, 200
