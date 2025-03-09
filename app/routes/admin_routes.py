@@ -8,6 +8,7 @@ from app.utils.jwt_utils import token_required
 from app.schemas.user_schema import UserSchema
 from app.schemas.bookings_schema import BookingSchema
 from app.schemas.transaction_schema import TransactionSchema
+import logging
 
 user_schema = UserSchema()
 booking_schema = BookingSchema()
@@ -48,6 +49,8 @@ class ViewAllUsersResource(Resource):
         return user_schema.dump(users, many=True), 200
 
 
+
+
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
@@ -81,6 +84,7 @@ class ViewAllBookingsResource(Resource):
                 'total_items': bookings.total
             }
         }, 200
+    
 
 class ViewAllTransactionsResource(Resource):
     @token_required
