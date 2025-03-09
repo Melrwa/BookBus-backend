@@ -53,6 +53,10 @@ class ViewAllUsersResource(Resource):
 
 
 
+# Initialize the schema
+booking_schema = BookingSchema()
+bookings_schema = BookingSchema(many=True)  # For serializing multiple bookings
+
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
@@ -95,6 +99,9 @@ class ViewAllBookingsResource(Resource):
         response = make_response(response_data, 200)
         response.headers['Content-Type'] = 'application/json'
         return response
+
+
+
 
 class ViewAllTransactionsResource(Resource):
     @token_required
