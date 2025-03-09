@@ -50,7 +50,6 @@ class ViewAllUsersResource(Resource):
         users = User.query.all()
         return user_schema.dump(users, many=True), 200
 
-
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
@@ -58,16 +57,12 @@ class ViewAllBookingsResource(Resource):
         if current_user.role != 'admin':
             return {'message': 'Unauthorized'}, 403
 
-        # Get pagination parameters from the query string
-        page = request.args.get('page', default=1, type=int)
-        per_page = request.args.get('per_page', default=10, type=int)
-
-        # Fetch all bookings from the database with pagination
-        bookings = Booking.query.paginate(page=page, per_page=per_page, error_out=False)
+        # Fetch all bookings from the database
+        bookings = Booking.query.all()
 
         # Serialize the bookings using the schema
         try:
-            serialized_bookings = bookings_schema.dump(bookings.items)
+            serialized_bookings = bookings_schema.dump(bookings)
             logging.info("Serialized Bookings: %s", serialized_bookings)  # Log the serialized data
         except Exception as e:
             logging.error("Serialization error: %s", str(e))  # Log the error
@@ -78,21 +73,8 @@ class ViewAllBookingsResource(Resource):
             logging.error("Serialization error: Invalid data format")  # Log the error
             return {'message': 'Serialization error: Invalid data format'}, 500
 
-        # Prepare the response data
-        response_data = {
-            'bookings': serialized_bookings,
-            'pagination': {
-                'page': bookings.page,
-                'per_page': bookings.per_page,
-                'total_pages': bookings.pages,
-                'total_bookings': bookings.total
-            }
-        }
-
-        # Use make_response to construct the response
-        response = make_response(response_data, 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        # Return the serialized bookings
+        return {'bookings': serialized_bookings}, 200
 
 
 

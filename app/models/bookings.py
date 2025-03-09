@@ -31,6 +31,18 @@ class Booking(db.Model):
         if status not in ['confirmed', 'canceled', 'pending']:
             raise ValueError("Invalid status. Must be 'confirmed', 'canceled', or 'pending'.")
         return status
+    
+
+    @property
+    def booking_info(self):
+        return {
+            'id': self.id,
+            'customer_id': self.customer_id,
+            'bus_id': self.bus_id,
+            'seat_number': self.seat_number,
+            'booking_date': self.booking_date.isoformat(),
+            'status': self.status
+        }
 
     def __repr__(self):
         return f'<Booking {self.id}>'
