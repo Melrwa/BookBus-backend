@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, request
 from flask_restful import Resource
 from app.models.user import User
 from app.models.bookings import Booking
@@ -47,20 +47,40 @@ class ViewAllUsersResource(Resource):
         users = User.query.all()
         return user_schema.dump(users, many=True), 200
 
+
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
-            if current_user.role != 'admin':
-                return {'message': 'Unauthorized'}, 403
+        if current_user.role != 'admin':
+            return {'message': 'Unauthorized'}, 403
 
-            # Fetch all bookings from the database
-            bookings = Booking.query.all()
+        # Get pagination parameters from the query string
+        page = request.args.get('page', default=1, type=int)
+        per_page = request.args.get('per_page', default=10, type=int)
 
-            # Serialize the bookings using the schema
-            serialized_bookings = booking_schema.dump(bookings, many=True)
+        # Paginate the bookings query
+        bookings = Booking.query.paginate(page=page, per_page=per_page, error_out=False)
 
-            # Return the serialized bookings as a JSON response
-            return serialized_bookings, 200
+        # Serialize the paginated bookings
+        try:
+            serialized_bookings = booking_schema.dump(bookings.items, many=True)
+        except Exception as e:
+            return {'message': f'Serialization error: {str(e)}'}, 500
+
+        # Ensure the output is JSON-serializable
+        if not isinstance(serialized_bookings, (list, dict)):
+            return {'message': 'Serialization error: Invalid data format'}, 500
+
+        # Return the serialized bookings along with pagination metadata
+        return {
+            'bookings': serialized_bookings,
+            'pagination': {
+                'page': bookings.page,
+                'per_page': bookings.per_page,
+                'total_pages': bookings.pages,
+                'total_items': bookings.total
+            }
+        }, 200
 
 class ViewAllTransactionsResource(Resource):
     @token_required
