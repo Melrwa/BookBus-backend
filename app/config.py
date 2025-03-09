@@ -27,6 +27,9 @@ class Config:
     CORS_METHODS = os.getenv("CORS_METHODS", "GET,POST,PUT,DELETE,OPTIONS").split(",")  # Allowed HTTP methods
     CORS_ALLOW_HEADERS = os.getenv("CORS_ALLOW_HEADERS", "Content-Type,Authorization").split(",")  # Allowed headers
     
+    PAGINATION_PER_PAGE = int(os.getenv("PAGINATION_PER_PAGE", 10))  # Default items per page
+    PAGINATION_MAX_PER_PAGE = int(os.getenv("PAGINATION_MAX_PER_PAGE", 100))  # Max items per page
+
 
 
     NEXT_PUBLIC_BACKEND_URL = os.getenv("NEXT_PUBLIC_BACKEND_URL")

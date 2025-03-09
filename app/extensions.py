@@ -9,8 +9,6 @@ from flask_restful import Api
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
-db = SQLAlchemy()
-migrate = Migrate()
 bcrypt = Bcrypt()
 cors = CORS()
-api = Api()
+api=Api()

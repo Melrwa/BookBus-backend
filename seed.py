@@ -1,9 +1,6 @@
 from app import create_app
 from app.extensions import db
-from app.models.user import User
-from app.models.bus import Bus
-from app.models.bookings import Booking
-from app.models.transactions import Transaction
+from app.models.models import User, Transaction, Booking, Bus
 from datetime import datetime, timedelta
 
 def seed_data():
@@ -11,7 +8,7 @@ def seed_data():
     with app.app_context():
         # Clear existing data
         db.drop_all()
-        db.create_all()
+        # db.create_all()
 
         # Seed Admin
         admin = User(

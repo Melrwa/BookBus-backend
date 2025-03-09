@@ -1,26 +1,15 @@
-from flask import request, jsonify, request, make_response
+from flask import request, make_response, jsonify
 from flask_restful import Resource
-from app.models.user import User
-from app.models.bookings import Booking
-from app.models.transactions import Transaction
+from app.models.models import Booking, Transaction, User
 from app.extensions import db
 from app.utils.jwt_utils import token_required
-from app.schemas.user_schema import UserSchema
-from app.schemas.bookings_schema import BookingSchema
-from app.schemas.transaction_schema import TransactionSchema
-import logging
-
-user_schema = UserSchema()
-booking_schema = BookingSchema()
-bookings_schema = BookingSchema(many=True)  # For serializing multiple bookings
-transaction_schema = TransactionSchema()
 
 
 class AddDriverResource(Resource):
     @token_required
     def post(self, current_user):
         if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
+            return make_response({'message': 'Unauthorized'}, 403)
 
         data = request.get_json()
         name = data.get('name')
@@ -28,10 +17,10 @@ class AddDriverResource(Resource):
         password = data.get('password')
 
         if not name or not email or not password:
-            return {'message': 'Missing required fields'}, 400
+            return make_response({'message': 'Missing required fields'}, 400)
 
         if User.query.filter_by(email=email).first():
-            return {'message': 'Email already registered'}, 400
+            return make_response({'message': 'Email already registered'}, 400)
 
         driver = User(name=name, email=email, role='driver')
         driver.set_password(password)
@@ -39,42 +28,22 @@ class AddDriverResource(Resource):
         db.session.add(driver)
         db.session.commit()
 
-        return user_schema.dump(driver), 201
-
-class ViewAllUsersResource(Resource):
-    @token_required
-    def get(self, current_user):
-        if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
-
-        users = User.query.all()
-        return user_schema.dump(users, many=True), 200
-
+        return make_response(driver.to_dict(), 201)  # Use .to_dict() instead of user_schema.dump(driver)
+    
+    
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
-        """Get all bookings (admin only)."""
+        """
+        Retrieve all bookings.
+        """
         if current_user.role != 'admin':
             return {'message': 'Unauthorized'}, 403
 
-        try:
-            # Fetch all bookings from the database
-            bookings = Booking.query.all()
-            logging.info(f"Fetched {len(bookings)} bookings from the database.")
-        except Exception as e:
-            logging.error(f"Error fetching bookings: {str(e)}")
-            return {'message': 'Failed to fetch bookings'}, 500
+        bookings = Booking.query.all()
+        print( booking.to_dict() for booking in bookings)
 
-        try:
-            # Serialize the bookings using the schema
-            serialized_bookings = bookings_schema.dump(bookings)
-            logging.info("Bookings serialized successfully.")
-        except Exception as e:
-            logging.error(f"Error serializing bookings: {str(e)}")
-            return {'message': 'Failed to serialize bookings'}, 500
-
-        # Return the serialized bookings
-        return {'bookings': serialized_bookings}, 200
+        return [booking.to_dict() for booking in bookings]
 
 
 
@@ -82,8 +51,44 @@ class ViewAllBookingsResource(Resource):
 class ViewAllTransactionsResource(Resource):
     @token_required
     def get(self, current_user):
+        """
+        Retrieve all transactions.
+        """
         if current_user.role != 'admin':
             return {'message': 'Unauthorized'}, 403
 
         transactions = Transaction.query.all()
-        return transaction_schema.dump(transactions, many=True), 200
+        return jsonify([
+            {
+                "id": transaction.id,
+                "booking_id": transaction.booking_id,
+                "amount_paid": transaction.amount_paid,
+                "payment_date": transaction.payment_date.isoformat(),
+                "payment_method": transaction.payment_method,
+                "booking": transaction.booking.id if transaction.booking else None  # Assuming booking has an id attribute
+            }
+            for transaction in transactions
+        ])
+
+
+class ViewAllUsersResource(Resource):
+    @token_required
+    def get(self, current_user):
+        """
+        Retrieve all users.
+        """
+        if current_user.role != 'admin':
+            return {'message': 'Unauthorized'}, 403
+
+        users = User.query.all()
+        return jsonify([
+            {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "role": user.role,
+                "buses": [bus.id for bus in user.buses],  # Return only IDs to avoid circular references
+                "bookings": [booking.id for booking in user.bookings]  # Return only IDs to avoid circular references
+            }
+            for user in users
+        ])

@@ -1,11 +1,8 @@
 from flask import request, jsonify
 from flask_restful import Resource
-from app.models.user import User
+from app.models.models import User
 from app.extensions import db, bcrypt
 from app.utils.jwt_utils import generate_token
-from app.schemas.user_schema import UserSchema
-
-user_schema = UserSchema()
 
 class RegisterResource(Resource):
     def post(self):
@@ -28,7 +25,7 @@ class RegisterResource(Resource):
         db.session.commit()
 
         token = generate_token(user.id, user.role)
-        return {'token': token, 'user': user_schema.dump(user)}, 201
+        return {'token': token, 'user': user.to_dict()}, 201  # Use .to_dict() instead of user_schema.dump(user)
 
 class LoginResource(Resource):
     def post(self):
@@ -44,4 +41,4 @@ class LoginResource(Resource):
             return {'message': 'Invalid email or password'}, 401
 
         token = generate_token(user.id, user.role)
-        return {'token': token, 'user': user_schema.dump(user)}, 200
+        return {'token': token, 'user': user.to_dict()}, 200  # Use .to_dict() instead of user_schema.dump(user)
