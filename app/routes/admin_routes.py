@@ -51,12 +51,6 @@ class ViewAllUsersResource(Resource):
         return user_schema.dump(users, many=True), 200
 
 
-
-
-# Initialize the schema
-booking_schema = BookingSchema()
-bookings_schema = BookingSchema(many=True)  # For serializing multiple bookings
-
 class ViewAllBookingsResource(Resource):
     @token_required
     def get(self, current_user):
