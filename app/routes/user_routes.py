@@ -148,25 +148,24 @@ class SearchBusResource(Resource):
         if not all([departure_date, from_location, to_location]):
             return {'message': 'Missing required fields (departure_date, from, to)'}, 400
 
-        # Convert departure_date to a datetime object
+        # Convert departure_date to a datetime object (ignoring time)
         try:
-            departure_date = datetime.fromisoformat(departure_date)
+            departure_date = datetime.fromisoformat(departure_date).date()  # Extract only the date part
         except ValueError:
             return {'message': 'Invalid departure date format (use ISO format)'}, 400
 
         # Search for buses
         buses = Bus.query.filter(
             and_(
-                Bus.departure_time >= departure_date,
-                Bus.route.ilike(f'%{from_location}%'),
-                Bus.route.ilike(f'%{to_location}%'),
+                Bus.departure_time.cast(db.Date) == departure_date,  # Compare only the date part
+                Bus.route.ilike(f'%{from_location}%'),  # Origin is the first part of the route
+                Bus.route.ilike(f'%{to_location}%'),    # Destination is the last part of the route
                 Bus.is_available == True
             )
         ).all()
 
         buses_data = [bus.to_dict() for bus in buses]
         return buses_data, 200
-
 
 class SimulatePaymentResource(Resource):
     def post(self, booking_id):
