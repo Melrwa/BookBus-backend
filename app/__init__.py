@@ -6,6 +6,8 @@ from .extensions import db, migrate, bcrypt, cors, api  # Import all extensions
 from .routes.auth_routes import RegisterResource, LoginResource, CheckSessionResource, LogoutResource
 from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource, AssignDriverToBusResource, ChangeUserRoleResource,  ViewMyBusesResource
 from app.routes.driver_routes import AddBusResource, UpdateBusResource, DeleteBusResource, ScheduleBusResource,  UpdatePriceResource, MyAssignedBusesResource
+from app.routes.user_routes import ViewAvailableSeatsResource, ViewAvailableBusesResource, ViewMyBookingsResource, CancelBookingResource, ViewAvailableBusesResource, BookSeatResource, UpdateBookingResource, SearchBusResource, SimulatePaymentResource
+
 import os
 
 def create_app():
@@ -56,6 +58,15 @@ def create_app():
     api.add_resource(DeleteBusResource, '/driver/delete_bus/<bus_id>')
     api.add_resource(ScheduleBusResource, '/driver/schedule_bus/<bus_id>')
     api.add_resource(MyAssignedBusesResource, '/driver/my_assigned_bus')
+
+
+    # User Routes
+    api.add_resource(BookSeatResource, '/user/book_seat')
+    api.add_resource(ViewMyBookingsResource,'/user/my_bookings/<customer_id>')
+    api.add_resource(UpdateBookingResource, '/user/update_booking>')
+    
+
+
 
 
 

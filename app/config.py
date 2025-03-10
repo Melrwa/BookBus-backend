@@ -10,7 +10,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "default_jwt_secret_key")
 
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///app.db")
+    SQLALCHEMY_DATABASE_URI = "postgresql://melkizedek:OQK0dbe16zWQcynsULX3we50TGHed1jU@dpg-cv748ngfnakc738hcicg-a.oregon-postgres.render.com/bookbus_x6a5"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # Avoids SQLAlchemy warning
 
