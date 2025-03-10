@@ -67,7 +67,7 @@ def create_app():
     api.add_resource(BookSeatResource, '/user/book_seat')
     api.add_resource(ViewMyBookingsResource,'/user/my_bookings/<customer_id>')
     api.add_resource(UpdateBookingResource, '/user/update_booking>')
-    api.add_resource(ViewAvailableBusesResource, '/buses')
+    api.add_resource(ViewAvailableBusesResource, 'user/buses')
     api.add_resource(ViewAvailableSeatsResource, '/bus/<int:bus_id>')
     api.add_resource(SearchBusResource, )
     
