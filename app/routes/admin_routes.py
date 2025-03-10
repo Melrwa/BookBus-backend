@@ -121,3 +121,17 @@ class ChangeUserRoleResource(Resource):
 
         # Return success response
         return {'message': f'User role changed to {new_role} successfully'}, 200
+    
+
+
+class ViewMyBusesResource(Resource):
+     def get(self):
+        """
+        View all buses added by the driver.
+        """
+        # Fetch all buses (for simplicity, no driver filtering)
+        buses = Bus.query.all()
+        buses_data = [bus.to_dict() for bus in buses]
+        return buses_data, 200
+     
+

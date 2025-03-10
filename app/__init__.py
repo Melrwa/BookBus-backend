@@ -4,7 +4,8 @@ from .config import Config, config  # Import the config dictionary
 from flask_restful import Api
 from .extensions import db, migrate, bcrypt, cors, api  # Import all extensions
 from .routes.auth_routes import RegisterResource, LoginResource
-from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource, AssignDriverToBusResource, ChangeUserRoleResource
+from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource, AssignDriverToBusResource, ChangeUserRoleResource,  ViewMyBusesResource
+from app.routes.driver_routes import AddBusResource, UpdateBusResource, DeleteBusResource, ScheduleBusResource,  UpdatePriceResource, MyAssignedBusesResource
 import os
 
 def create_app():
@@ -33,14 +34,34 @@ def create_app():
     )
 
     # Register routes
+    # Auth Routes
     api.add_resource(RegisterResource, '/register')
     api.add_resource(LoginResource, '/login')
+
+    #Admin Routes
     api.add_resource(AddDriverResource, '/admin/add_driver')
     api.add_resource(ViewAllUsersResource, '/admin/users')
     api.add_resource(ViewAllBookingsResource, '/admin/bookings')
     api.add_resource(ViewAllTransactionsResource, '/admin/transactions')
     api.add_resource(AssignDriverToBusResource, '/admin/assign_driver')
     api.add_resource(ChangeUserRoleResource, '/admin/change_user_role')
+    api.add_resource(ViewMyBusesResource,'/admin/my_buses' )
+
+    # Driver Routes
+    api.add_resource(AddBusResource, '/driver/add_bus')
+    api.add_resource(UpdateBusResource, '/driver/update_bus/<bus_id>')
+    api.add_resource(UpdatePriceResource, '/driver/update_price/<bus_id>')
+    api.add_resource(DeleteBusResource, '/driver/delete_bus/<bus_id>')
+    api.add_resource(ScheduleBusResource, '/driver/schedule_bus/<bus_id>')
+    api.add_resource(MyAssignedBusesResource, '/driver/my_assigned_bus?driver_id')
+
+
+    
+
+   
+
+
+
 
     # Create database tables (if they don't exist)
     with app.app_context():
