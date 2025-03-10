@@ -69,7 +69,7 @@ def create_app():
     api.add_resource(UpdateBookingResource, '/user/update_booking>')
     api.add_resource(ViewAvailableBusesResource, '/user/buses')
     api.add_resource(ViewAvailableSeatsResource, '/bus/<int:bus_id>')
-    api.add_resource(SearchBusResource,'/user/search_bus' )
+    api.add_resource(SearchBusResource,  '/buses/search') 
     
 
 
