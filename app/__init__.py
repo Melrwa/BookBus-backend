@@ -4,7 +4,7 @@ from .config import Config, config  # Import the config dictionary
 from flask_restful import Api
 from .extensions import db, migrate, bcrypt, cors, api  # Import all extensions
 from .routes.auth_routes import RegisterResource, LoginResource
-from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource
+from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource, AssignDriverToBusResource, ChangeUserRoleResource
 import os
 
 def create_app():
@@ -39,6 +39,8 @@ def create_app():
     api.add_resource(ViewAllUsersResource, '/admin/users')
     api.add_resource(ViewAllBookingsResource, '/admin/bookings')
     api.add_resource(ViewAllTransactionsResource, '/admin/transactions')
+    api.add_resource(AssignDriverToBusResource, '/admin/assign_driver')
+    api.add_resource(ChangeUserRoleResource, '/admin/change_user_role')
 
     # Create database tables (if they don't exist)
     with app.app_context():

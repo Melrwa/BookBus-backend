@@ -1,20 +1,15 @@
 from flask import request, jsonify
 from flask_restful import Resource
-from app.models.models import Booking, Transaction, User
+from app.models.models import Booking, Bus, Transaction, User
 from app.extensions import db
 from app.utils.jwt_utils import token_required
 
 
 class AddDriverResource(Resource):
-    @token_required
-    def post(self, current_user):
+    def post(self):
         """
-        Add a new driver (admin-only).
+        Add a new driver (no admin check).
         """
-        # Check if the current user is an admin
-        if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
-
         data = request.get_json()
         name = data.get('name')
         email = data.get('email')
@@ -39,7 +34,6 @@ class AddDriverResource(Resource):
         # Return the driver's details
         return driver.to_dict(), 201
 
-
 class ViewAllBookingsResource(Resource):
     def get(self):
         bookings = Booking.query.all()
@@ -58,3 +52,72 @@ class ViewAllUsersResource(Resource):
         users = User.query.all()
         users_data = [user.to_dict() for user in users]
         return users_data, 200
+
+
+
+class AssignDriverToBusResource(Resource):
+    def post(self):
+        """
+        Assign a driver to a bus (no admin check).
+        """
+        data = request.get_json()
+        driver_id = data.get('driver_id')
+        bus_id = data.get('bus_id')
+
+        # Validate required fields
+        if not driver_id or not bus_id:
+            return {'message': 'Missing required fields (driver_id, bus_id)'}, 400
+
+        # Fetch the driver and bus
+        driver = User.query.get(driver_id)
+        bus = Bus.query.get(bus_id)
+
+        # Check if the driver and bus exist
+        if not driver:
+            return {'message': 'Driver not found'}, 404
+        if not bus:
+            return {'message': 'Bus not found'}, 404
+
+        # Check if the user is a driver
+        if driver.role != 'driver':
+            return {'message': 'User is not a driver'}, 400
+
+        # Assign the driver to the bus
+        bus.driver_id = driver.id
+        db.session.commit()
+
+        # Return success response
+        return {'message': 'Driver assigned to bus successfully'}, 200
+
+
+class ChangeUserRoleResource(Resource):
+    def post(self):
+        """
+        Change a user's role (no admin check).
+        """
+        data = request.get_json()
+        user_id = data.get('user_id')
+        new_role = data.get('new_role')
+
+        # Validate required fields
+        if not user_id or not new_role:
+            return {'message': 'Missing required fields (user_id, new_role)'}, 400
+
+        # Fetch the user
+        user = User.query.get(user_id)
+
+        # Check if the user exists
+        if not user:
+            return {'message': 'User not found'}, 404
+
+        # Validate the new role
+        valid_roles = ['admin', 'driver', 'customer']
+        if new_role not in valid_roles:
+            return {'message': 'Invalid role'}, 400
+
+        # Change the user's role
+        user.role = new_role
+        db.session.commit()
+
+        # Return success response
+        return {'message': f'User role changed to {new_role} successfully'}, 200
