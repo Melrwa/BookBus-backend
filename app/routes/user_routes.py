@@ -202,3 +202,56 @@ class SimulatePaymentResource(Resource):
 
         # Return the transaction details
         return transaction.to_dict(), 201
+    
+    
+    
+class BookMultipleSeatsResource(Resource):
+    def post(self):
+        """
+        Book multiple seats on a bus.
+        """
+        data = request.get_json()
+        customer_id = data.get('customer_id')  # Automatically fetched from the logged-in user
+        bus_id = data.get('bus_id')
+        seat_numbers = data.get('seat_numbers')  # List of seat numbers selected by the user
+
+        # Validate required fields
+        if not all([customer_id, bus_id, seat_numbers]):
+            return {'message': 'Missing required fields (customer_id, bus_id, seat_numbers)'}, 400
+
+        # Fetch the bus
+        bus = Bus.query.get(bus_id)
+        if not bus:
+            return {'message': 'Bus not found'}, 404
+
+        # Check if all selected seats are available
+        for seat_number in seat_numbers:
+            if seat_number < 1 or seat_number > bus.number_of_seats:
+                return {'message': f'Invalid seat number: {seat_number}'}, 400
+
+            existing_booking = Booking.query.filter_by(bus_id=bus_id, seat_number=seat_number).first()
+            if existing_booking:
+                return {'message': f'Seat {seat_number} is already booked'}, 400
+
+        # Calculate total amount to be paid
+        total_amount = len(seat_numbers) * bus.cost_per_seat
+
+        # Create bookings for each selected seat
+        bookings = []
+        for seat_number in seat_numbers:
+            booking = Booking(
+                customer_id=customer_id,
+                bus_id=bus_id,
+                seat_number=seat_number,
+                status='pending'
+            )
+            db.session.add(booking)
+            bookings.append(booking)
+
+        db.session.commit()
+
+        # Return the booking details and total amount
+        return {
+            'bookings': [booking.to_dict() for booking in bookings],
+            'total_amount': total_amount
+        }, 201
