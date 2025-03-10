@@ -2,7 +2,9 @@ from flask import request, make_response, jsonify
 from flask_restful import Resource
 from app.models.models import User
 from app.extensions import db, bcrypt
-from app.utils.jwt_utils import generate_token
+from app.utils.jwt_utils import generate_token, decode_token
+from datetime import datetime, timedelta
+
 
 class RegisterResource(Resource):
     def post(self):
@@ -31,11 +33,23 @@ class RegisterResource(Resource):
         # Generate a JWT token for the new user
         token = generate_token(user.id, user.role)
 
-        # Return the token and user data
-        return make_response(jsonify({
-            'token': token,
-            'user': user.to_dict()  # Use the to_dict() method to serialize the user
+        # Create a response and set the JWT as a cookie
+        response = make_response(jsonify({
+            'user': user.to_dict()  # Return user data (excluding password)
         }), 201)
+
+        # Set the JWT as a secure, HTTP-only cookie
+        response.set_cookie(
+            'jwt_token',
+            token,
+            httponly=True,
+            secure=True,  # Set to True in production (HTTPS only)
+            samesite='Strict',  # Prevent CSRF attacks
+            max_age=timedelta(hours=1).total_seconds()  # Token expires in 1 hour
+        )
+
+        return response
+
 
 class LoginResource(Resource):
     def post(self):
@@ -57,8 +71,65 @@ class LoginResource(Resource):
         # Generate a JWT token for the authenticated user
         token = generate_token(user.id, user.role)
 
-        # Return the token and user data
-        return make_response(jsonify({
-            'token': token,
-            'user': user.to_dict()  # Use the to_dict() method to serialize the user
+        # Create a response and set the JWT as a cookie
+        response = make_response(jsonify({
+            'user': user.to_dict()  # Return user data (excluding password)
         }), 200)
+
+        # Set the JWT as a secure, HTTP-only cookie
+        response.set_cookie(
+            'jwt_token',
+            token,
+            httponly=True,
+            secure=True,  # Set to True in production (HTTPS only)
+            samesite='Strict',  # Prevent CSRF attacks
+            max_age=timedelta(hours=1).total_seconds()  # Token expires in 1 hour
+        )
+
+        return response
+
+
+class CheckSessionResource(Resource):
+    def get(self):
+        """
+        Check if the user is authenticated by verifying the JWT cookie.
+        """
+        # Get the JWT token from the cookie
+        token = request.cookies.get('jwt_token')
+
+        if not token:
+            return make_response(jsonify({'message': 'Not authenticated'}), 401)
+
+        # Decode the token
+        payload = decode_token(token)
+        if not payload:
+            return make_response(jsonify({'message': 'Invalid or expired token'}), 401)
+
+        # Fetch the user from the database
+        user = User.query.get(payload['user_id'])
+        if not user:
+            return make_response(jsonify({'message': 'User not found'}), 404)
+
+        # Return the user's data
+        return make_response(jsonify({
+            'user': user.to_dict()  # Return user data (excluding password)
+        }), 200)
+
+
+class LogoutResource(Resource):
+    def delete(self):
+        """
+        Log out the user by clearing the JWT cookie.
+        """
+        # Create a response and clear the JWT cookie
+        response = make_response(jsonify({'message': 'Logged out successfully'}), 200)
+        response.set_cookie(
+            'jwt_token',
+            '',
+            httponly=True,
+            secure=True,  # Set to True in production (HTTPS only)
+            samesite='None',  # Prevent CSRF attacks
+            expires=0  # Expire the cookie immediately
+        )
+
+        return response
