@@ -1,4 +1,4 @@
-from flask import request, make_response, jsonify
+from flask import request, jsonify
 from flask_restful import Resource
 from app.models.models import Booking, Transaction, User
 from app.extensions import db
@@ -8,87 +8,53 @@ from app.utils.jwt_utils import token_required
 class AddDriverResource(Resource):
     @token_required
     def post(self, current_user):
+        """
+        Add a new driver (admin-only).
+        """
+        # Check if the current user is an admin
         if current_user.role != 'admin':
-            return make_response({'message': 'Unauthorized'}, 403)
+            return {'message': 'Unauthorized'}, 403
 
         data = request.get_json()
         name = data.get('name')
         email = data.get('email')
         password = data.get('password')
 
+        # Validate required fields
         if not name or not email or not password:
-            return make_response({'message': 'Missing required fields'}, 400)
+            return {'message': 'Missing required fields'}, 400
 
+        # Check if email is already registered
         if User.query.filter_by(email=email).first():
-            return make_response({'message': 'Email already registered'}, 400)
+            return {'message': 'Email already registered'}, 400
 
+        # Create a new driver
         driver = User(name=name, email=email, role='driver')
-        driver.set_password(password)
+        driver.password_hash = password  # Hash the password
 
+        # Add and commit the driver to the database
         db.session.add(driver)
         db.session.commit()
 
-        return make_response(driver.to_dict(), 201)  # Use .to_dict() instead of user_schema.dump(driver)
-    
-    
+        # Return the driver's details
+        return driver.to_dict(), 201
+
+
 class ViewAllBookingsResource(Resource):
-    @token_required
-    def get(self, current_user):
-        """
-        Retrieve all bookings.
-        """
-        if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
-
+    def get(self):
         bookings = Booking.query.all()
-        print( booking.to_dict() for booking in bookings)
-
-        return [booking.to_dict() for booking in bookings]
-
-
+        bookings_data = [booking.to_dict() for booking in bookings]
+        return bookings_data, 200
 
 
 class ViewAllTransactionsResource(Resource):
-    @token_required
-    def get(self, current_user):
-        """
-        Retrieve all transactions.
-        """
-        if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
-
+    def get(self):
         transactions = Transaction.query.all()
-        return jsonify([
-            {
-                "id": transaction.id,
-                "booking_id": transaction.booking_id,
-                "amount_paid": transaction.amount_paid,
-                "payment_date": transaction.payment_date.isoformat(),
-                "payment_method": transaction.payment_method,
-                "booking": transaction.booking.id if transaction.booking else None  # Assuming booking has an id attribute
-            }
-            for transaction in transactions
-        ])
-
+        transactions_data = [transaction.to_dict() for transaction in transactions]
+        return transactions_data, 200
 
 class ViewAllUsersResource(Resource):
-    @token_required
-    def get(self, current_user):
-        """
-        Retrieve all users.
-        """
-        if current_user.role != 'admin':
-            return {'message': 'Unauthorized'}, 403
-
+    def get(self):
         users = User.query.all()
-        return jsonify([
-            {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "role": user.role,
-                "buses": [bus.id for bus in user.buses],  # Return only IDs to avoid circular references
-                "bookings": [booking.id for booking in user.bookings]  # Return only IDs to avoid circular references
-            }
-            for user in users
-        ])
+        users_data = [user.to_dict() for user in users]
+        return users_data, 200

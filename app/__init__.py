@@ -1,26 +1,29 @@
 from flask import Flask
 from flask_cors import CORS
-from .config import Config
+from .config import Config, config  # Import the config dictionary
 from flask_restful import Api
-from .extensions import db, migrate, bcrypt
+from .extensions import db, migrate, bcrypt, cors, api  # Import all extensions
 from .routes.auth_routes import RegisterResource, LoginResource
-from .routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource
-
+from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource
+import os
 
 def create_app():
     # Initialize Flask app
     app = Flask(__name__)
-
-    # Load configuration
-    app.config.from_object(Config)
-
+    
+    # Load configuration based on environment
+    env = os.getenv("FLASK_ENV", "development")  # Default to development
+    app.config.from_object(config[env])  # Load the appropriate config class
+    api = Api(app) 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
-    
-    api = Api(app)
+    cors.init_app(app)  # Initialize CORS
+    api.init_app(app)  # Initialize Flask-RESTful
+   
 
+    # Configure CORS
     CORS(
         app,
         origins=app.config["CORS_ORIGINS"],
@@ -28,7 +31,6 @@ def create_app():
         allow_headers=app.config["CORS_ALLOW_HEADERS"],
         supports_credentials=True,  # Allow credentials (e.g., cookies, authorization headers)
     )
-
 
     # Register routes
     api.add_resource(RegisterResource, '/register')

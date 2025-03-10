@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, make_response, jsonify
 from flask_restful import Resource
 from app.models.models import User
 from app.extensions import db, bcrypt
@@ -12,20 +12,30 @@ class RegisterResource(Resource):
         password = data.get('password')
         role = data.get('role', 'customer')  # Default role is 'customer'
 
+        # Validate required fields
         if not name or not email or not password:
-            return {'message': 'Missing required fields'}, 400
+            return make_response(jsonify({'message': 'Missing required fields (name, email, password)'}), 400)
 
+        # Check if email is already registered
         if User.query.filter_by(email=email).first():
-            return {'message': 'Email already registered'}, 400
+            return make_response(jsonify({'message': 'Email already registered'}), 400)
 
+        # Create a new user
         user = User(name=name, email=email, role=role)
-        user.set_password(password)
+        user.password_hash = password  # This will hash the password automatically
 
+        # Add and commit the user to the database
         db.session.add(user)
         db.session.commit()
 
+        # Generate a JWT token for the new user
         token = generate_token(user.id, user.role)
-        return {'token': token, 'user': user.to_dict()}, 201  # Use .to_dict() instead of user_schema.dump(user)
+
+        # Return the token and user data
+        return make_response(jsonify({
+            'token': token,
+            'user': user.to_dict()  # Use the to_dict() method to serialize the user
+        }), 201)
 
 class LoginResource(Resource):
     def post(self):
@@ -33,12 +43,22 @@ class LoginResource(Resource):
         email = data.get('email')
         password = data.get('password')
 
+        # Validate required fields
         if not email or not password:
-            return {'message': 'Missing email or password'}, 400
+            return make_response(jsonify({'message': 'Missing email or password'}), 400)
 
+        # Find the user by email
         user = User.query.filter_by(email=email).first()
-        if not user or not user.check_password(password):
-            return {'message': 'Invalid email or password'}, 401
 
+        # Check if the user exists and the password is correct
+        if not user or not user.check_password(password):
+            return make_response(jsonify({'message': 'Invalid email or password'}), 401)
+
+        # Generate a JWT token for the authenticated user
         token = generate_token(user.id, user.role)
-        return {'token': token, 'user': user.to_dict()}, 200  # Use .to_dict() instead of user_schema.dump(user)
+
+        # Return the token and user data
+        return make_response(jsonify({
+            'token': token,
+            'user': user.to_dict()  # Use the to_dict() method to serialize the user
+        }), 200)

@@ -1,6 +1,4 @@
-from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
 
 # Import all models here
 from .models import Bus, User, Transaction, Booking

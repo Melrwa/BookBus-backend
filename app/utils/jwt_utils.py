@@ -10,9 +10,13 @@ def generate_token(user_id, role):
     """
     Generates a JWT token for a user.
     """
+    # Convert the role to a string if it's an enum
+    if hasattr(role, 'value'):  # Check if it's an enum
+        role = role.value
+
     payload = {
         'user_id': user_id,
-        'role': role,
+        'role': role,  # role is now a string
         'exp': datetime.utcnow() + current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
     }
     token = jwt.encode(payload, current_app.config['JWT_SECRET_KEY'], algorithm='HS256')

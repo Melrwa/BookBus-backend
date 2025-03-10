@@ -4,19 +4,21 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_serializer import SerializerMixin
 from app.extensions import db, bcrypt
 from sqlalchemy.orm import validates
-from app.utils.jwt_utils import generate_token  # Import the JWT utility
+from app.utils.jwt_utils import generate_token
 from enum import Enum as PyEnum
 
 
-class UserRole(PyEnum):
+class UserRole(str, PyEnum):
     ADMIN = "admin"
     DRIVER = "driver"
     CUSTOMER = "customer"
 
-class BookingStatus(PyEnum):
+
+class BookingStatus(str, PyEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
     CANCELED = "canceled"
+
 
 # User Model
 class User(db.Model, SerializerMixin):
@@ -27,7 +29,6 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     _password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(Enum(UserRole), default=UserRole.CUSTOMER, nullable=False)
-
 
     # Relationships
     bookings = db.relationship('Booking', back_populates='customer', cascade='all, delete-orphan')
@@ -45,23 +46,25 @@ class User(db.Model, SerializerMixin):
         return bcrypt.check_password_hash(self._password_hash, password)
 
     def generate_auth_token(self):
-        """
-        Generates a JWT token for the user.
-        """
+        """Generates a JWT token for the user."""
         return generate_token(self.id, self.role)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email,
-            "role": self.role,
-            "bookings": [booking.to_dict() for booking in self.bookings],
-            "buses": [bus.to_dict() for bus in self.buses]
-        }
+            
+    def to_dict(self, serialize=True):
+            data = {
+                "id": self.id,
+                "name": self.name,
+                "email": self.email,
+                "role": self.role.value if hasattr(self.role, 'value') else str(self.role),
+            }
+            if serialize:
+                data.update({
+                    "buses": [bus.id for bus in self.buses],  # Only return bus IDs
+                    "bookings": [booking.id for booking in self.bookings]  # Only return booking IDs
+                })
+            return data
 
     def __repr__(self):
-        return f'<User  {self.name}>'
+        return f'<User {self.name}>'
 
 
 # Bus Model
@@ -83,25 +86,22 @@ class Bus(db.Model, SerializerMixin):
 
     @property
     def available_seats(self):
-        """
-        Calculates the number of available seats.
-        """
+        """Calculates the number of available seats."""
         confirmed_bookings = [booking for booking in self.bookings if booking.status == BookingStatus.CONFIRMED]
         return self.number_of_seats - len(confirmed_bookings)
 
     @property
     def travel_time(self):
-        """
-        Calculates the travel time in hours and minutes.
-        """
+        """Calculates the travel time in hours and minutes."""
         delta = self.arrival_time - self.departure_time
         total_seconds = delta.total_seconds()
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
         return f"{hours}h {minutes}m"
 
-    def to_dict(self):
-        return {
+
+    def to_dict(self, serialize=True):
+        data = {
             "id": self.id,
             "driver_id": self.driver_id,
             "number_of_seats": self.number_of_seats,
@@ -112,10 +112,14 @@ class Bus(db.Model, SerializerMixin):
             "is_available": self.is_available,
             "available_seats": self.available_seats,
             "travel_time": self.travel_time,
-            "driver": self.driver.to_dict() if self.driver else None,
-            "bookings": [booking.to_dict() for booking in self.bookings]
         }
-
+        if serialize:
+            data.update({
+                "driver": self.driver.to_dict(serialize=False) if self.driver else None,
+                "bookings": [booking.to_dict(serialize=False) for booking in self.bookings]
+            })
+        return data
+    
     @validates('number_of_seats')
     def validate_number_of_seats(self, key, number_of_seats):
         if number_of_seats < 1:
@@ -136,9 +140,8 @@ class Bus(db.Model, SerializerMixin):
 
     def __repr__(self):
         return f'<Bus {self.route}>'
-    
 
-# Booking Model
+
 class Booking(db.Model, SerializerMixin):
     __tablename__ = 'bookings'
 
@@ -147,26 +150,31 @@ class Booking(db.Model, SerializerMixin):
     bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'), nullable=False)
     seat_number = db.Column(db.Integer, nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    role = db.Column(Enum(UserRole), default=UserRole.CUSTOMER, nullable=False)
-
-    status = db.Column(Enum(BookingStatus), default=BookingStatus.PENDING, nullable =False)
-
+    status = db.Column(Enum(BookingStatus), default=BookingStatus.PENDING, nullable=False)
 
     # Relationships
-    customer = db.relationship('User ', back_populates='bookings')
+    customer = db.relationship('User', back_populates='bookings')
     bus = db.relationship('Bus', back_populates='bookings')
+    transaction = db.relationship('Transaction', back_populates='booking', uselist=False)  # Add this line
 
-    def to_dict(self):
-        return {
+
+    def to_dict(self, serialize=True):
+        data = {
             "id": self.id,
             "customer_id": self.customer_id,
             "bus_id": self.bus_id,
             "seat_number": self.seat_number,
             "booking_date": self.booking_date.isoformat(),
-            "status": self.status,
-            "customer": self.customer.to_dict() if self.customer else None,
-            "bus": self.bus.to_dict() if self.bus else None
+            "status": self.status.value if hasattr(self.status, 'value') else str(self.status),
         }
+        if serialize:
+            data.update({
+                "customer": self.customer.to_dict(serialize=False) if self.customer else None,
+                "bus": self.bus.to_dict(serialize=False) if self.bus else None,
+                "transaction": self.transaction.to_dict(serialize=False) if self.transaction else None
+            })
+        return data
+
 
     @validates('seat_number')
     def validate_seat_number(self, key, seat_number):
@@ -176,7 +184,7 @@ class Booking(db.Model, SerializerMixin):
 
     @validates('status')
     def validate_status(self, key, status):
-        if status not in ['confirmed', 'canceled', 'pending']:
+        if status not in [BookingStatus.CONFIRMED, BookingStatus.CANCELED, BookingStatus.PENDING]:
             raise ValueError("Invalid status. Must be 'confirmed', 'canceled', or 'pending'.")
         return status
 
@@ -197,15 +205,21 @@ class Transaction(db.Model, SerializerMixin):
     # Relationships
     booking = db.relationship('Booking', back_populates='transaction')
 
-    def to_dict(self):
-        return {
+
+
+    def to_dict(self, serialize=True):
+        data = {
             "id": self.id,
             "booking_id": self.booking_id,
             "amount_paid": self.amount_paid,
             "payment_date": self.payment_date.isoformat(),
             "payment_method": self.payment_method,
-            "booking": self.booking.to_dict() if self.booking else None
         }
+        if serialize:
+            data.update({
+                "booking": self.booking.to_dict(serialize=False) if self.booking else None
+            })
+        return data
 
     @validates('amount_paid')
     def validate_amount_paid(self, key, amount_paid):
