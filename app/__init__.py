@@ -50,6 +50,8 @@ def create_app():
     api.add_resource(AssignDriverToBusResource, '/admin/assign_driver')
     api.add_resource(ChangeUserRoleResource, '/admin/change_user_role')
     api.add_resource(ViewMyBusesResource,'/admin/my_buses' )
+    api.add_resource(FetchDriversResource, '/admin/drivers')  
+    api.add_resource(DeleteDriverResource, '/admin/drivers/<int:driver_id>')
 
     # Driver Routes
     api.add_resource(AddBusResource, '/driver/add_bus')
@@ -58,9 +60,7 @@ def create_app():
     api.add_resource(DeleteBusResource, '/driver/delete_bus/<bus_id>')
     api.add_resource(ScheduleBusResource, '/driver/schedule_bus/<bus_id>')
     api.add_resource(MyAssignedBusesResource, '/driver/my_assigned_bus')
-    api.add_resource(FetchDriversResource, '/drivers')  
-    api.add_resource(DeleteDriverResource, '/drivers/<int:driver_id>')
-
+  
 
 
     # User Routes
