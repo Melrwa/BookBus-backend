@@ -53,8 +53,6 @@ class ViewAllUsersResource(Resource):
         users_data = [user.to_dict() for user in users]
         return users_data, 200
 
-
-
 class AssignDriverToBusResource(Resource):
     def post(self):
         """
@@ -86,9 +84,12 @@ class AssignDriverToBusResource(Resource):
         bus.driver_id = driver.id
         db.session.commit()
 
-        # Return success response
-        return {'message': 'Driver assigned to bus successfully'}, 200
-
+        # Return success response with updated driver and bus details
+        return {
+            'message': 'Driver assigned to bus successfully',
+            'driver': driver.to_dict(),
+            'bus': bus.to_dict()
+        }, 200
 
 class ChangeUserRoleResource(Resource):
     def post(self):

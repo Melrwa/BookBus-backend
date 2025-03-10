@@ -49,20 +49,20 @@ class User(db.Model, SerializerMixin):
         """Generates a JWT token for the user."""
         return generate_token(self.id, self.role)
             
+  
     def to_dict(self, serialize=True):
-            data = {
-                "id": self.id,
-                "name": self.name,
-                "email": self.email,
-                "role": self.role.value if hasattr(self.role, 'value') else str(self.role),
-            }
-            if serialize:
-                data.update({
-                    "buses": [bus.id for bus in self.buses],  # Only return bus IDs
-                    "bookings": [booking.id for booking in self.bookings]  # Only return booking IDs
-                })
-            return data
-
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "role": self.role.value if hasattr(self.role, 'value') else str(self.role),
+        }
+        if serialize:
+            data.update({
+                "buses": [bus.to_dict(serialize=False) for bus in self.buses],  # Include full bus details
+                "bookings": [booking.to_dict(serialize=False)for booking in self.bookings]  # Only return booking IDs
+            })
+        return data
     def __repr__(self):
         return f'<User {self.name}>'
 
