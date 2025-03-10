@@ -26,8 +26,8 @@ def seed_data():
 
             # Seed Drivers
             print("Seeding drivers...")
-            driver1 = User(name="Driver One", email="driver1@example.com", role=UserRole.DRIVER)
-            driver1.password_hash = "driverpassword"
+            driver1 = User(name="Brian Kesi", email="brian@gmail.com", role=UserRole.DRIVER)
+            driver1.password_hash = "password123"
             db.session.add(driver1)
 
             driver2 = User(name="Driver Two", email="driver2@example.com", role=UserRole.DRIVER)

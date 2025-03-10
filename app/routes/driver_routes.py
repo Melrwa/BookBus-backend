@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from flask_restful import Resource
-from app.models.models import Bus, User
+from app.models.models import Bus, User, UserRole
 from app.extensions import db
 from datetime import datetime
 
@@ -177,3 +177,36 @@ class MyAssignedBusesResource(Resource):
         # Return the list of buses
         buses_data = [bus.to_dict() for bus in buses]
         return buses_data, 200
+    
+
+class FetchDriversResource(Resource):
+    def get(self):
+        """
+        Fetch all users with the role 'driver'.
+        """
+        drivers = User.query.filter_by(role=UserRole.DRIVER).all()
+        drivers_data = [driver.to_dict() for driver in drivers]
+        return drivers_data, 200
+    
+
+
+class DeleteDriverResource(Resource):
+    def delete(self, driver_id):
+        """
+        Delete a driver by their ID.
+        """
+        driver = User.query.get(driver_id)
+
+        # Check if the driver exists
+        if not driver:
+            return {'message': 'Driver not found'}, 404
+
+        # Check if the user is a driver
+        if driver.role != UserRole.DRIVER:
+            return {'message': 'User is not a driver'}, 400
+
+        # Delete the driver
+        db.session.delete(driver)
+        db.session.commit()
+
+        return {'message': 'Driver deleted successfully'}, 200

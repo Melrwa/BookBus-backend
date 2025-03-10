@@ -5,7 +5,7 @@ from flask_restful import Api
 from .extensions import db, migrate, bcrypt, cors, api  # Import all extensions
 from .routes.auth_routes import RegisterResource, LoginResource, CheckSessionResource, LogoutResource
 from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource, AssignDriverToBusResource, ChangeUserRoleResource,  ViewMyBusesResource
-from app.routes.driver_routes import AddBusResource, UpdateBusResource, DeleteBusResource, ScheduleBusResource,  UpdatePriceResource, MyAssignedBusesResource
+from app.routes.driver_routes import AddBusResource, DeleteDriverResource, FetchDriversResource, UpdateBusResource, DeleteBusResource, ScheduleBusResource,  UpdatePriceResource, MyAssignedBusesResource
 from app.routes.user_routes import ViewAvailableSeatsResource, ViewAvailableBusesResource, ViewMyBookingsResource, CancelBookingResource, ViewAvailableBusesResource, BookSeatResource, UpdateBookingResource, SearchBusResource, SimulatePaymentResource
 
 import os
@@ -58,12 +58,25 @@ def create_app():
     api.add_resource(DeleteBusResource, '/driver/delete_bus/<bus_id>')
     api.add_resource(ScheduleBusResource, '/driver/schedule_bus/<bus_id>')
     api.add_resource(MyAssignedBusesResource, '/driver/my_assigned_bus')
+    api.add_resource(FetchDriversResource, '/drivers')  
+    api.add_resource(DeleteDriverResource, '/drivers/<int:driver_id>')
+
 
 
     # User Routes
     api.add_resource(BookSeatResource, '/user/book_seat')
     api.add_resource(ViewMyBookingsResource,'/user/my_bookings/<customer_id>')
     api.add_resource(UpdateBookingResource, '/user/update_booking>')
+    api.add_resource(ViewAvailableBusesResource, '/buses')
+    api.add_resource(ViewAvailableSeatsResource, '/bus/<int:bus_id>')
+    api.add_resource(SearchBusResource, )
+    
+
+
+
+
+
+
     
 
 
