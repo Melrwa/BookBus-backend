@@ -364,7 +364,6 @@ class SimpleBookingResource(Resource):
 
         # Create the booking
         booking = Booking(
-            customer_name=customer_name,
             customer_id=customer_id,
             bus_id=bus_id,
             seat_number=seat_number,
