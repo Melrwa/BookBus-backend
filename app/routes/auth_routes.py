@@ -89,31 +89,55 @@ class LoginResource(Resource):
         return response
 
 
+# class CheckSessionResource(Resource):
+    # def get(self):
+    #     """
+    #     Check if the user is authenticated by verifying the JWT cookie.
+    #     """
+    #     # Get the JWT token from the cookie
+    #     token = request.cookies.get('jwt_token')
+
+    #     if not token:
+    #         return make_response(jsonify({'message': 'Not authenticated'}), 401)
+
+    #     # Decode the token
+    #     payload = decode_token(token)
+    #     if not payload:
+    #         return make_response(jsonify({'message': 'Invalid or expired token'}), 401)
+
+    #     # Fetch the user from the database
+    #     user = User.query.get(payload['user_id'])
+    #     if not user:
+    #         return make_response(jsonify({'message': 'User not found'}), 404)
+
+    #     # Return the user's data
+    #     return make_response(jsonify({
+    #         'user': user.to_dict()  # Return user data (excluding password)
+    #     }), 200)
+    
+
 class CheckSessionResource(Resource):
     def get(self):
-        """
-        Check if the user is authenticated by verifying the JWT cookie.
-        """
-        # Get the JWT token from the cookie
         token = request.cookies.get('jwt_token')
 
         if not token:
             return make_response(jsonify({'message': 'Not authenticated'}), 401)
 
-        # Decode the token
         payload = decode_token(token)
         if not payload:
             return make_response(jsonify({'message': 'Invalid or expired token'}), 401)
 
-        # Fetch the user from the database
         user = User.query.get(payload['user_id'])
         if not user:
             return make_response(jsonify({'message': 'User not found'}), 404)
 
-        # Return the user's data
         return make_response(jsonify({
-            'user': user.to_dict()  # Return user data (excluding password)
+            'role': user.role,  # Ensure this matches the enum values in your database
+            'token': token,  # Return the token
+            'user': user.to_dict()
         }), 200)
+    
+
 
 
 class LogoutResource(Resource):

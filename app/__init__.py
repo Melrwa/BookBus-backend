@@ -6,7 +6,7 @@ from .extensions import db, migrate, bcrypt, cors, api  # Import all extensions
 from .routes.auth_routes import RegisterResource, LoginResource, CheckSessionResource, LogoutResource
 from app.routes.admin_routes import AddDriverResource, ViewAllUsersResource, ViewAllBookingsResource, ViewAllTransactionsResource, AssignDriverToBusResource, ChangeUserRoleResource,  ViewMyBusesResource
 from app.routes.driver_routes import AddBusResource, DeleteDriverResource, FetchDriversResource, UpdateBusResource, DeleteBusResource, ScheduleBusResource,  UpdatePriceResource, MyAssignedBusesResource
-from app.routes.user_routes import BookMultipleSeatsResource, ViewAvailableSeatsResource, ViewAvailableBusesResource, ViewMyBookingsResource, CancelBookingResource, ViewAvailableBusesResource, BookSeatResource, UpdateBookingResource, SearchBusResource, SimulatePaymentResource
+from app.routes.user_routes import BookMultipleSeatsResource, ConfirmPaymentResource, ViewAvailableSeatsResource, ViewAvailableBusesResource, ViewMyBookingsResource, CancelBookingResource, ViewAvailableBusesResource, BookSeatResource, UpdateBookingResource, SearchBusResource, SimulatePaymentResource
 
 import os
 
@@ -65,14 +65,15 @@ def create_app():
 
     # User Routes
     api.add_resource(BookSeatResource, '/user/book_seat')
-    api.add_resource(ViewMyBookingsResource,'/user/my_bookings/<customer_id>')
     api.add_resource(UpdateBookingResource, '/user/update_booking>')
     api.add_resource(ViewAvailableBusesResource, '/user/buses')
     api.add_resource(ViewAvailableSeatsResource, '/bus/<int:bus_id>')
     api.add_resource(SearchBusResource,  '/buses/search') 
     api.add_resource(BookMultipleSeatsResource, '/api/bookings/multiple')
     api.add_resource(CancelBookingResource, '/user/cancel_bookings')
-    
+    api.add_resource(ViewMyBookingsResource, '/api/user/bookings/<int:customer_id>')
+    api.add_resource(ConfirmPaymentResource, '/api/bookings/<int:booking_id>/confirm_payment')
+
     
 
 

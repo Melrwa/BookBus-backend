@@ -203,7 +203,7 @@ class SimulatePaymentResource(Resource):
         # Return the transaction details
         return transaction.to_dict(), 201
     
-    
+
     
 class BookMultipleSeatsResource(Resource):
     def post(self):
@@ -255,3 +255,54 @@ class BookMultipleSeatsResource(Resource):
             'bookings': [booking.to_dict() for booking in bookings],
             'total_amount': total_amount
         }, 201
+
+
+class ViewMyBookingsResource(Resource):
+    def get(self, customer_id):
+        """
+        View all bookings for a customer.
+        """
+        bookings = Booking.query.filter_by(customer_id=customer_id).all()
+        bookings_data = [booking.to_dict() for booking in bookings]
+        return bookings_data, 200
+    
+
+
+class ConfirmPaymentResource(Resource):
+    def post(self, booking_id):
+        """
+        Confirm payment for a booking.
+        """
+        data = request.get_json()
+        payment_method = data.get('payment_method')
+
+        # Validate required fields
+        if not payment_method:
+            return {'message': 'Payment method is required'}, 400
+
+        # Fetch the booking
+        booking = Booking.query.get(booking_id)
+        if not booking:
+            return {'message': 'Booking not found'}, 404
+
+        # Check if the booking is already confirmed
+        if booking.status == 'confirmed':
+            return {'message': 'Booking is already confirmed'}, 400
+
+        # Calculate the total amount to be paid
+        total_amount = booking.bus.cost_per_seat
+
+        # Create a new transaction
+        transaction = Transaction(
+            booking_id=booking_id,
+            amount_paid=total_amount,
+            payment_method=payment_method
+        )
+        db.session.add(transaction)
+
+        # Update the booking status to confirmed
+        booking.status = 'confirmed'
+        db.session.commit()
+
+        # Return the transaction details
+        return transaction.to_dict(), 201
