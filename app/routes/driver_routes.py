@@ -48,7 +48,7 @@ class AddBusResource(Resource):
 
         # Return the bus's details
         return bus.to_dict(), 201
-
+    
 class UpdateBusResource(Resource):
     def put(self, bus_id):
         """
@@ -62,26 +62,44 @@ class UpdateBusResource(Resource):
             return {'message': 'Bus not found'}, 404
 
         data = request.get_json()
-        number_of_seats = data.get('number_of_seats')
-        cost_per_seat = data.get('cost_per_seat')
-        route = data.get('route')
-        departure_time = data.get('departure_time')
-        arrival_time = data.get('arrival_time')
-        is_available = data.get('is_available')
 
-        # Update bus details
-        if number_of_seats:
-            bus.number_of_seats = number_of_seats
-        if cost_per_seat:
-            bus.cost_per_seat = cost_per_seat
-        if route:
-            bus.route = route
-        if departure_time:
-            bus.departure_time = datetime.fromisoformat(departure_time)
-        if arrival_time:
-            bus.arrival_time = datetime.fromisoformat(arrival_time)
-        if is_available is not None:
-            bus.is_available = is_available
+        # Update bus details with validation
+        try:
+            number_of_seats = data.get('number_of_seats')
+            if number_of_seats is not None:
+                number_of_seats = int(number_of_seats)  # Convert to integer
+                if number_of_seats < 1:
+                    return {'message': 'Number of seats must be at least 1'}, 400
+                bus.number_of_seats = number_of_seats
+
+            cost_per_seat = data.get('cost_per_seat')
+            if cost_per_seat is not None:
+                cost_per_seat = float(cost_per_seat)  # Convert to float
+                if cost_per_seat < 0:
+                    return {'message': 'Cost per seat cannot be negative'}, 400
+                bus.cost_per_seat = cost_per_seat
+
+            route = data.get('route')
+            if route is not None:
+                bus.route = route
+
+            departure_time = data.get('departure_time')
+            if departure_time is not None:
+                bus.departure_time = datetime.fromisoformat(departure_time)
+
+            arrival_time = data.get('arrival_time')
+            if arrival_time is not None:
+                bus.arrival_time = datetime.fromisoformat(arrival_time)
+
+            is_available = data.get('is_available')
+            if is_available is not None:
+                if not isinstance(is_available, bool):
+                    return {'message': 'is_available must be a boolean'}, 400
+                bus.is_available = is_available
+
+        except (ValueError, TypeError) as e:
+            # Handle invalid input (e.g., non-integer number_of_seats or non-float cost_per_seat)
+            return {'message': f'Invalid input: {str(e)}'}, 400
 
         # Commit changes to the database
         db.session.commit()
