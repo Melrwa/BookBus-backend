@@ -339,7 +339,6 @@ class SimpleBookingResource(Resource):
         Create a booking for a single seat on a bus.
         """
         data = request.get_json()
-        customer_name = data.get('customer_name')
         customer_id = data.get('customer_id')
         bus_id = data.get('bus_id')
         seat_number = data.get('seat_number')
