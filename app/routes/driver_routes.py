@@ -4,30 +4,30 @@ from app.models.models import Bus, User, UserRole
 from app.extensions import db
 from datetime import datetime
 
-
 class AddBusResource(Resource):
     def post(self):
         """
         Add a new bus.
         """
         data = request.get_json()
-        number_of_seats = data.get('number_of_seats')
-        cost_per_seat = data.get('cost_per_seat')
-        route = data.get('route')
-        departure_time = data.get('departure_time')
-        arrival_time = data.get('arrival_time')
 
         # Validate required fields
-        if not all([number_of_seats, cost_per_seat, route, departure_time, arrival_time]):
+        required_fields = ['number_of_seats', 'cost_per_seat', 'route', 'departure_time', 'arrival_time']
+        if not all(field in data for field in required_fields):
             return {'message': 'Missing required fields'}, 400
+
+        # Validate number_of_seats
+        number_of_seats = data.get('number_of_seats')
+        if number_of_seats < 1:
+            return {'message': 'Number of seats must be at least 1'}, 400
 
         # Create a new bus
         bus = Bus(
             number_of_seats=number_of_seats,
-            cost_per_seat=cost_per_seat,
-            route=route,
-            departure_time=datetime.fromisoformat(departure_time),
-            arrival_time=datetime.fromisoformat(arrival_time),
+            cost_per_seat=data.get('cost_per_seat'),
+            route=data.get('route'),
+            departure_time=datetime.fromisoformat(data.get('departure_time')),
+            arrival_time=datetime.fromisoformat(data.get('arrival_time')),
             is_available=True
         )
 
@@ -37,7 +37,6 @@ class AddBusResource(Resource):
 
         # Return the bus's details
         return bus.to_dict(), 201
-
 
 
 class UpdateBusResource(Resource):

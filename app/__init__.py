@@ -52,6 +52,7 @@ def create_app():
     api.add_resource(ViewMyBusesResource,'/admin/my_buses' )
     api.add_resource(FetchDriversResource, '/admin/drivers')  
     api.add_resource(DeleteDriverResource, '/admin/drivers/<int:driver_id>')
+    
 
     # Driver Routes
     api.add_resource(AddBusResource, '/driver/add_bus')
