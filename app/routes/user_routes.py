@@ -345,7 +345,7 @@ class SimpleBookingResource(Resource):
         seat_number = data.get('seat_number')
 
         # Validate required fields
-        if not all([customer_name, customer_id, bus_id, seat_number]):
+        if not all([ customer_id, bus_id, seat_number]):
             return {'message': 'Missing required fields (customer_name, customer_id, bus_id, seat_number)'}, 400
 
         # Fetch the bus
