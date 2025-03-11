@@ -306,3 +306,26 @@ class ConfirmPaymentResource(Resource):
 
         # Return the transaction details
         return transaction.to_dict(), 201
+
+
+
+
+
+
+class UserSelectSeatsResource(Resource):
+    def get(self, bus_id):
+        """
+        View available seats for a bus (for drivers).
+        """
+        bus = Bus.query.get(bus_id)
+        if not bus:
+            return {'message': 'Bus not found'}, 404
+
+        # Get all confirmed bookings for the bus
+        confirmed_bookings = Booking.query.filter_by(bus_id=bus_id, status='confirmed').all()
+        booked_seats = [booking.seat_number for booking in confirmed_bookings]
+
+        # Calculate available seats
+        available_seats = [seat for seat in range(1, bus.number_of_seats + 1) if seat not in booked_seats]
+
+        return {'available_seats': available_seats}, 200
