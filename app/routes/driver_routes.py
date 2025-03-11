@@ -4,6 +4,7 @@ from app.models.models import Bus, User, UserRole
 from app.extensions import db
 from datetime import datetime
 
+
 class AddBusResource(Resource):
     def post(self):
         """
@@ -17,14 +18,24 @@ class AddBusResource(Resource):
             return {'message': 'Missing required fields'}, 400
 
         # Validate number_of_seats
-        number_of_seats = data.get('number_of_seats')
+        try:
+            number_of_seats = int(data.get('number_of_seats'))  # Convert to integer
+        except (ValueError, TypeError):
+            return {'message': 'Number of seats must be a valid integer'}, 400
+
         if number_of_seats < 1:
             return {'message': 'Number of seats must be at least 1'}, 400
+
+        # Validate cost_per_seat
+        try:
+            cost_per_seat = float(data.get('cost_per_seat'))  # Convert to float
+        except (ValueError, TypeError):
+            return {'message': 'Cost per seat must be a valid number'}, 400
 
         # Create a new bus
         bus = Bus(
             number_of_seats=number_of_seats,
-            cost_per_seat=data.get('cost_per_seat'),
+            cost_per_seat=cost_per_seat,
             route=data.get('route'),
             departure_time=datetime.fromisoformat(data.get('departure_time')),
             arrival_time=datetime.fromisoformat(data.get('arrival_time')),
@@ -37,7 +48,6 @@ class AddBusResource(Resource):
 
         # Return the bus's details
         return bus.to_dict(), 201
-
 
 class UpdateBusResource(Resource):
     def put(self, bus_id):
