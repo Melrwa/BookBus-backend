@@ -333,60 +333,52 @@ class UserSelectSeatsResource(Resource):
 
 
 
-
-
 class SimpleBookingResource(Resource):
     def post(self):
         """
-        Create a booking for a specified number of seats on a bus.
+        Create a booking for a single seat on a bus.
         """
         data = request.get_json()
+        customer_name = data.get('customer_name')
         customer_id = data.get('customer_id')
         bus_id = data.get('bus_id')
-        number_of_seats = data.get('number_of_seats')
+        seat_number = data.get('seat_number')
 
         # Validate required fields
-        if not all([customer_id, bus_id, number_of_seats]):
-            return {'message': 'Missing required fields (customer_id, bus_id, number_of_seats)'}, 400
+        if not all([customer_name, customer_id, bus_id, seat_number]):
+            return {'message': 'Missing required fields (customer_name, customer_id, bus_id, seat_number)'}, 400
 
         # Fetch the bus
         bus = Bus.query.get(bus_id)
         if not bus:
             return {'message': 'Bus not found'}, 404
 
-        # Check if the number of seats is valid
-        if number_of_seats < 1 or number_of_seats > bus.number_of_seats:
-            return {'message': f'Invalid number of seats. Maximum seats available: {bus.number_of_seats}'}, 400
+        # Check if the seat number is valid
+        if seat_number < 1 or seat_number > bus.number_of_seats:
+            return {'message': f'Invalid seat number. Seat must be between 1 and {bus.number_of_seats}'}, 400
 
-        # Find available seats
-        confirmed_bookings = Booking.query.filter_by(bus_id=bus_id, status='confirmed').all()
-        booked_seats = [booking.seat_number for booking in confirmed_bookings]
-        available_seats = [seat for seat in range(1, bus.number_of_seats + 1) if seat not in booked_seats]
+        # Check if the seat is already booked
+        existing_booking = Booking.query.filter_by(bus_id=bus_id, seat_number=seat_number, status='confirmed').first()
+        if existing_booking:
+            return {'message': f'Seat {seat_number} is already booked.'}, 400
 
-        # Check if there are enough available seats
-        if len(available_seats) < number_of_seats:
-            return {'message': f'Not enough available seats. Only {len(available_seats)} seats are available.'}, 400
-
-        # Create bookings for the selected seats
-        bookings = []
-        for seat_number in available_seats[:number_of_seats]:
-            booking = Booking(
-                customer_id=customer_id,
-                bus_id=bus_id,
-                seat_number=seat_number,
-                status='pending'
-            )
-            db.session.add(booking)
-            bookings.append(booking)
-
+        # Create the booking
+        booking = Booking(
+            customer_name=customer_name,
+            customer_id=customer_id,
+            bus_id=bus_id,
+            seat_number=seat_number,
+            status='confirmed'  # Assuming the booking is confirmed immediately
+        )
+        db.session.add(booking)
         db.session.commit()
 
         # Calculate total amount
-        total_amount = number_of_seats * bus.cost_per_seat
+        total_amount = bus.cost_per_seat
 
         # Return the booking details and total amount
         return {
-            'bookings': [booking.to_dict() for booking in bookings],
+            'booking': booking.to_dict(),
             'total_amount': total_amount
         }, 201
 
